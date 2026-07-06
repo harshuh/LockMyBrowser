@@ -2,14 +2,17 @@
   "name": "server",
   "version": "1.0.0",
   "type": "module",
-  "description": "TypeScript Express API with PostgreSQL",
+  "description": "LockMyBrowser Backend Server & APIs",
   "main": "dist/app.js",
   "scripts": {
-    "dev": "ts-node app/app.ts",
-    "dev:watch": "nodemon --exec ts-node src/app.ts",
+    "dev": "tsx watch src/app.ts",
     "build": "tsc",
     "start": "node dist/app.js",
-    "type-check": "tsc --noEmit"
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:studio": "prisma studio",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
