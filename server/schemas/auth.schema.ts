@@ -1,3 +1,4 @@
+import { error } from "node:console";
 import { z } from "zod";
 
 export const registerSchema = z.object({
@@ -27,5 +28,14 @@ export const loginSchema = z.object({
         .min(1, "Pin is required"),
 });
 
-export type RegisterInput = z.infer<typeof registerSchema>;
-export type LoginInput    = z.infer<typeof loginSchema>;
+export const setSecretPinSchema = z.object({
+    secretPin: z
+        .string({ error: "Secret pin is required" })
+        .regex(/^\d+$/, "Secret pin must contain only digits")
+        .min(4, "Secret pin must be at least 4 digits")
+        .max(12, "Secret pin can't exceed 12 digits"),
+})
+
+export type RegisterInput     = z.infer<typeof registerSchema>;
+export type LoginInput        = z.infer<typeof loginSchema>;
+export type SecretPinInput    = z.infer<typeof setSecretPinSchema>;
