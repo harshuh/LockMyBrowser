@@ -1,5 +1,5 @@
 
-class ApiResponse<T>  {
+export class ApiResponse<T>  {
 
     public readonly success: boolean;
     public readonly statusCode: number;
