@@ -19,7 +19,7 @@ export const signRefreshToken = (payload:JwtPayload)=>{
 
 
 // Here we Verify the JWTs
-export const VerifyAccessToken = (token:string)=>{
+export const verifyAccessToken = (token:string)=>{
     try {
         return jwt.verify(token,env.JWT_ACCESS_SECRET as Secret) as JwtPayload
     } catch (error) {
@@ -27,7 +27,7 @@ export const VerifyAccessToken = (token:string)=>{
     }
 }
 
-export const VerifyRefreshToken = (token:string)=>{
+export const verifyRefreshToken = (token:string)=>{
     try {
         return jwt.verify(token,env.JWT_REFRESH_SECRET as Secret) as JwtPayload
     } catch (error) {
