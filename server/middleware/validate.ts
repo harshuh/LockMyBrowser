@@ -1,13 +1,13 @@
 
 import type { Request, Response, NextFunction } from 'express';
-import   { ZodError } from 'zod';
+import  {type ZodType, ZodError } from 'zod';
 import { ApiError } from '../utils/ApiError.js';
 
 type RequestPart = 'body' | 'query' | 'params';
 
 
 export const validate = (
-  schema : ZodSchema,
+  schema : ZodType,
   part   : RequestPart = 'body',
 ) => {
   return (req: Request, _res: Response, next: NextFunction): void => {
