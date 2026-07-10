@@ -1,8 +1,6 @@
 import bcrypt from 'bcryptjs'
-import { PassThrough } from 'node:stream';
 
-const SALT_ROUNDS = 18;
-
+const SALT_ROUNDS = 10;
 
 export const hashPin = async (pin:string): Promise<string> =>{
     return bcrypt.hash(pin,SALT_ROUNDS);
