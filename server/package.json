@@ -5,7 +5,7 @@
   "description": "LockMyBrowser Backend Server & APIs",
   "main": "dist/app.js",
   "scripts": {
-    "dev": "tsx watch src/app.ts",
+    "dev": "tsx watch app/app.ts",
     "build": "tsc",
     "start": "node dist/app.js",
     "db:migrate": "prisma migrate dev",
