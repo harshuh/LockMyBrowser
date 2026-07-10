@@ -14,6 +14,7 @@ const envSchema = z.object({
     REDIS_URL: z.string().min(1,'REDIS_URL is required'),
 
     //Redis (I dont use if you want to use then use it )
+    //it is required when it is not passed in the above url (REDIS_URL) also pass these variables in redisClient file (below url)
     REDIS_USERNAME: z.string().min(1,'REDIS_USERNAME is required'),
     REDIS_PASSWORD: z.string().min(1,'REDIS_PASSWORD is required'),
 

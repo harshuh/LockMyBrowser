@@ -5,6 +5,7 @@ import { env } from "../envs/env";
 
 const redis = createClient({
   url: env.REDIS_URL,
+  //use username and password if it not is in the REDIS_URL
 });
 
 redis.on("error", (err) => console.error("Redis error:", err));
