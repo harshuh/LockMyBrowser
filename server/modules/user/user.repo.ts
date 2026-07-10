@@ -8,41 +8,18 @@ import type {
 
 
 export class UserRepository {
+
+  async findUserByEmail(email: string) {
+    return prisma.user.findUnique({ where: { email } });
+  }
+
   async registerUser(data: RegisterInput) {
     return await prisma.user.create({
       data,
+      select: { id: true, name: true, email: true, createdAt: true },
     });
   }
-
-  async updatePin(userId: string, pin: string) {
-    return await prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        pin,
-      },
-    });
-  }
-
-  async updateSecretPin(userId: string, secretpin: string) {
-    return await prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        secretpin,
-      },
-    });
-  }
-
-  async deleteUser(userId: string) {
-    return await prisma.user.delete({
-      where: {
-        id: userId,
-      },
-    });
-  }
+  
 }
 
 export const userRepository = new UserRepository();
