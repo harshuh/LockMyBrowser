@@ -12,7 +12,7 @@ model User {
   name      String
   email     String   @unique
   pin       String
-  secretpin String
+  secretpin String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
