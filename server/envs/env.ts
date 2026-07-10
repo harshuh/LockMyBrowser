@@ -9,7 +9,14 @@ const envSchema = z.object({
 
     // Database
     DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+
+    // Redis Url
     REDIS_URL: z.string().min(1,'REDIS_URL is required'),
+
+    //Redis (I dont use if you want to use then use it )
+    REDIS_USERNAME: z.string().min(1,'REDIS_USERNAME is required'),
+    REDIS_PASSWORD: z.string().min(1,'REDIS_PASSWORD is required'),
+
 
     // JWT
     JWT_ACCESS_SECRET    : z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 chars'),
