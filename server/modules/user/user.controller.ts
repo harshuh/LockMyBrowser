@@ -32,4 +32,4 @@ export class UserController {
         }
   };
 }
-export const userControlller = new UserController()
+export const userController = new UserController()

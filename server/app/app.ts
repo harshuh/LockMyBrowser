@@ -1,5 +1,6 @@
 import express, {type Express } from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { env } from "../envs/env";
 import { errorHandler } from "../middleware/globalErrorHandler";
 
@@ -9,6 +10,7 @@ import { number } from "zod";
 export const app = express();
 
 app.use(cors())
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 
