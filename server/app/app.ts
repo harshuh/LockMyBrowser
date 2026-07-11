@@ -1,11 +1,11 @@
-import express, {type Express } from "express";
+import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { env } from "../envs/env";
 import { errorHandler } from "../middleware/globalErrorHandler";
 
 import userRoutes from "../modules/user/user.routes"
-import { number } from "zod";
+import { connectRedis } from "../config/redisClient";
 
 export const app = express();
 
@@ -30,6 +30,12 @@ app.use(errorHandler)
 
 const PORT = Number(env.PORT) || 8000;
 
-const server = app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+async function startServer() {
+  await connectRedis();
+
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+startServer();

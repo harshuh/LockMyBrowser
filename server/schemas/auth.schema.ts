@@ -27,6 +27,14 @@ export const loginSchema = z.object({
         .min(1, "Pin is required"),
 });
 
+export const pinSchema = z.object({
+  pin: z
+    .string({ error: "Pin is required" })
+    .regex(/^\d+$/, "Pin must contain only digits")
+    .min(4, "Pin must be at least 4 digits")
+    .max(12, "Pin can't exceed 12 digits"),
+});
+
 export const setSecretPinSchema = z.object({
     secretPin: z
         .string({ error: "Secret pin is required" })
@@ -37,4 +45,5 @@ export const setSecretPinSchema = z.object({
 
 export type RegisterInput     = z.infer<typeof registerSchema>;
 export type LoginInput        = z.infer<typeof loginSchema>;
+export type PinInput          = z.infer<typeof pinSchema>;
 export type SecretPinInput    = z.infer<typeof setSecretPinSchema>;

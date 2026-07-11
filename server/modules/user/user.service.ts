@@ -1,3 +1,4 @@
+
 import { userRepository } from "./user.repo";
 import { comparePin, hashPin } from "../../utils/hash";
 import { ApiError } from "../../utils/ApiError";
@@ -47,6 +48,21 @@ export class UserService {
             accessToken,
             refreshToken,
         };
+    }
+
+
+    async unlockBrowser(userId: string, pin: string){
+        
+        const pinHash = await userRepository.getPinHashToUnlock(userId)
+
+        if(!pinHash) throw new UnauthorizedError("User not found");
+
+        const isValid = await comparePin(pin, pinHash);
+
+        if (!isValid) throw new UnauthorizedError("Invalid PIN");
+
+        return { unlocked: true };
+
     }
 }
 
