@@ -51,5 +51,44 @@ export class UserController {
             next(error)
         }
     }
+
+    refresh = async (req:Request, res:Response, next:NextFunction)=>{
+        try {
+
+            const refreshToken = req.cookies?.refreshToken;
+
+            if (!refreshToken) throw new UnauthorizedError("No refresh token provided");
+
+            const data = await userService.refreshAccessToken(refreshToken);
+
+            res.status(200).json(new ApiResponse(200, "Token refreshed", data));
+
+
+        } catch (error) {
+            next(error)
+        }
+    }
+
+    
+    logout = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const refreshToken = req.cookies?.refreshToken
+
+      if (!refreshToken) throw new UnauthorizedError("No refresh token provided")
+
+      const data = await userService.logoutUser(refreshToken);
+
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
+
+      res.status(200).json(new ApiResponse(200, data.message));
+    } catch (error) {
+      next(error)
+    }
+    }
 }
 export const userController = new UserController()
+

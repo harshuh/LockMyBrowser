@@ -4,7 +4,7 @@ import { comparePin, hashPin } from "../../utils/hash";
 import { ApiError } from "../../utils/ApiError";
 import { ConflictError, UnauthorizedError } from "../../utils/CustomErrors";
 import type { RegisterInput, LoginInput, SecretPinInput,} from "../../schemas/auth.schema";
-import { signAccessToken, signRefreshToken } from "../../utils/jwt";
+import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../../utils/jwt";
 
 
 export class UserService {
@@ -50,7 +50,6 @@ export class UserService {
         };
     }
 
-
     async unlockBrowser(userId: string, pin: string){
         
         const pinHash = await userRepository.getPinHashToUnlock(userId)
@@ -63,6 +62,39 @@ export class UserService {
 
         return { unlocked: true };
 
+    }
+
+    async refreshAccessToken(refreshToken: string) {
+
+        if (!refreshToken) throw new UnauthorizedError("Refresh token missing");
+
+        let payload
+        try {
+
+            payload = verifyRefreshToken(refreshToken)
+
+        } catch (error) {
+            throw new UnauthorizedError("Invalid or expired refresh token")
+        }
+
+        const storedToken = await userRepository.findRefreshToken(refreshToken)
+
+        if(!storedToken || storedToken.expiresAt<new Date()){
+            throw new UnauthorizedError("Refresh token invalid or expired — please login again")
+        }
+
+        const accessToken = signAccessToken({id:payload.id})
+
+        return { accessToken };
+
+    }
+
+    async logoutUser(refreshToken: string){
+        if(!refreshToken) throw new UnauthorizedError("Refresh token missing")
+
+        await userRepository.deleteRefreshToken(refreshToken)
+
+        return {message: "Logged out successfully"}
     }
 }
 

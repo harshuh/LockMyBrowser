@@ -13,4 +13,9 @@ router.post('/login', validate(loginSchema), userController.login)
 
 router.post('/unlock', authenticate, validate(pinSchema), userController.unlock);
 
+router.post('/refresh',authenticate , userController.refresh)
+
+router.post('/logout', authenticate, userController.logout )
+
 export default router;
+

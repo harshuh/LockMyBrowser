@@ -15,6 +15,10 @@ export class UserRepository {
     return prisma.user.findUnique({ where: { email } });
   }
 
+  async findUserById(id: string) {
+    return prisma.user.findUnique({ where: { id } });
+  }
+
   async registerUser(data: RegisterInput) {
     return await prisma.user.create({
       data,
@@ -26,6 +30,14 @@ export class UserRepository {
     return prisma.refreshToken.create({
       data: { userId, token, expiresAt },
     });
+  }
+
+  async findRefreshToken(token: string) {
+    return prisma.refreshToken.findUnique({ where: { token } });
+  }
+
+  async deleteRefreshToken(token: string) {
+    return prisma.refreshToken.deleteMany({ where: { token } });
   }
 
   async getPinHashToUnlock(userId: string) {
