@@ -19,7 +19,13 @@ export class UserRepository {
       select: { id: true, name: true, email: true, createdAt: true },
     });
   }
+
+  async saveRefreshToken(userId: string, token: string, expiresAt: Date) {
+  return prisma.refreshToken.create({
+    data: { userId, token, expiresAt },
+  });
   
+}
 }
 
 export const userRepository = new UserRepository();
