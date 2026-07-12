@@ -5,7 +5,7 @@
   "description": "Secure your browser with LockMyBrowser — locks all tabs and protects your browsing session with JWT-backed authentication.",
 
   "permissions": ["tabs", "storage", "idle"],
-  "host_permissions": ["<all_urls>"],
+  "host_permissions": ["<all_urls>", "http://localhost:1124/*"],
 
   "background": {
     "service_worker": "src/background/service_worker.ts",
@@ -50,6 +50,6 @@
   },
 
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'none'; connect-src 'self'"
+    "extension_pages": "script-src 'self'; object-src 'none'; connect-src 'self' http://localhost:1124"
   }
 }

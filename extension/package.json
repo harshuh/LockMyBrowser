@@ -10,12 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.6.1",
     "@eslint/js": "^9.39.4",
+    "@types/bcryptjs": "^3.0.0",
     "@types/chrome": "^0.1.43",
     "@types/node": "^24.12.0",
     "@types/react": "^19.2.14",
