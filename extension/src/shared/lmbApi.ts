@@ -25,7 +25,7 @@ export async function apiRegister(name: string, email: string, pin: string): Pro
 export async function apiLogin(
   email: string,
   pin: string
-): Promise<ApiResponse<{ accessToken: string; pinHash:string, user: { id: string; name: string; email: string } }>> {
+): Promise<ApiResponse<{ accessToken: string; pinHash: string; user: { id: string; name: string; email: string } }>> {
   const res = await fetch(`${API_BASE}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -39,8 +39,8 @@ export async function apiLogin(
     await chrome.storage.local.set({
       [STORAGE_KEYS.accessToken]: data.data.accessToken,
     });
+    await cacheBackendPinHash(data.data.pinHash)
   }
-  await cacheBackendPinHash(data.data.pinHash);
   return data;
 }
 
@@ -48,7 +48,7 @@ export async function apiUnlock(pin: string): Promise<{ ok: boolean; error?: str
   const result = await chrome.storage.local.get("lmb:accessToken");
   const accessToken = result["lmb:accessToken"];
 
-  if (!accessToken) return { ok: false, error: "Not logged in." };
+  if (accessToken) return { ok: false, error: "Not logged in." };
 
   try {
     const res = await fetch(`${API_BASE}/unlock`, {

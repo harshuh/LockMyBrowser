@@ -8,9 +8,8 @@ export default defineManifest({
     'Secure your browser with LockMyBrowser — locks all tabs and protects your browsing session.',
   version: pkg.version,
 
-  // permissions: ['tabs', 'storage', 'idle'],
   permissions: ['tabs', 'storage', 'idle'],
-  host_permissions: ['<all_urls>'],
+  host_permissions: ['<all_urls>', 'http://localhost:1124/*'],
 
   background: {
     service_worker: 'src/background/service_worker.ts',
@@ -26,13 +25,13 @@ export default defineManifest({
     },
   ],
 
- action: {
+  action: {
     default_popup: 'popup.html',
   },
 
   options_page: 'settings.html',
 
-   web_accessible_resources: [
+  web_accessible_resources: [
     {
       resources: ['lock.html', 'start.html', 'assets/*'],
       matches: ['<all_urls>'],
@@ -57,6 +56,6 @@ export default defineManifest({
   },
 
   content_security_policy: {
-    extension_pages: "script-src 'self'; object-src 'none'; connect-src 'self'",
+    extension_pages: "script-src 'self'; object-src 'none'; connect-src 'self' http://localhost:1124",
   },
 })
