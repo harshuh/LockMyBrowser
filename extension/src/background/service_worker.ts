@@ -1,4 +1,5 @@
-import { verifyPin, verifyPassword, hashString } from "../shared/lmbStorage";
+import { verifyPin } from "../shared/lmbStorage";
+import { apiUnlock } from "../shared/lmbApi";
 
 interface SavedTab {
   id: number;
@@ -20,7 +21,6 @@ const STORAGE_KEYS = {
   pin: "lmb:pin",
   settings: "lmb:settings",
   email: "lmb:email",
-  recoveryPassword: "lmb:recoveryPassword",
 };
 
 let isUnlocking = false;
@@ -31,6 +31,7 @@ chrome.runtime.onInstalled.addListener((details) => {
     chrome.tabs.create({ url: chrome.runtime.getURL("start.html") });
   }
 });
+
 // Re-show lock screen if browser was locked before closing
 chrome.runtime.onStartup.addListener(async () => {
   const result = await chrome.storage.local.get(STORAGE_KEYS.locked);
@@ -56,6 +57,7 @@ chrome.runtime.onStartup.addListener(async () => {
       .map((w) => chrome.windows.remove(w.id!).catch(() => {})),
   );
 });
+
 async function applyIdleDetection() {
   const result = await chrome.storage.local.get(STORAGE_KEYS.settings);
   const settings = result[STORAGE_KEYS.settings] as
@@ -104,14 +106,6 @@ async function lockBrowser() {
           index: t.index,
         })),
     }));
-
-  // Navigate all tabs to blank to hide content
-  // const allTabs = savedWindows.flatMap((w) => w.tabs);
-  // await Promise.all(
-  //   allTabs.map((t) =>
-  //     chrome.tabs.update(t.id, { url: "about:blank" }).catch(() => {}),
-  //   ),
-  // );
 
   // Set locked state before opening lock window
   await chrome.storage.local.set({
@@ -214,8 +208,7 @@ async function unlockBrowser() {
 
   try {
     const lockWindowId = result[STORAGE_KEYS.lockWindowId] as number | undefined;
-    const savedWindows = (result[STORAGE_KEYS.savedWindows] ??
-      []) as SavedWindow[];
+    const savedWindows = (result[STORAGE_KEYS.savedWindows] ?? []) as SavedWindow[];
 
     // Clear locked state first so content scripts stop redirecting
     isBackgroundUnlocked = true;
@@ -317,55 +310,34 @@ chrome.tabs.onCreated.addListener(async (tab) => {
     .catch(() => {});
 });
 
+
 async function verifyAndUnlock(enteredPin?: string): Promise<{ ok: boolean; error?: string }> {
   if (!enteredPin) {
     return { ok: false, error: "PIN required." };
   }
-  const result = await chrome.storage.local.get(STORAGE_KEYS.pin);
-  const storedPinHash = result[STORAGE_KEYS.pin] as string | undefined;
 
-  const isMatch = await verifyPin(enteredPin, storedPinHash ?? null);
-  if (!isMatch) {
-    return { ok: false, error: "Incorrect PIN." };
+  const result = await apiUnlock(enteredPin);
+
+  if (result.ok) {
+    await unlockBrowser();
+    return { ok: true };
   }
 
-  await unlockBrowser();
-  return { ok: true };
-}
+  if (result.error === "NETWORK_ERROR") {
+    const stored = await chrome.storage.local.get(STORAGE_KEYS.pin);
+    const storedPinHash = stored[STORAGE_KEYS.pin] as string | undefined;
 
-async function verifyResetAndUnlock(
-  enteredEmail?: string,
-  enteredPassword?: string,
-  newPin?: string
-): Promise<{ ok: boolean; error?: string }> {
-  if (!enteredEmail || !enteredPassword || !newPin) {
-    return { ok: false, error: "All fields are required." };
+    const isMatch = await verifyPin(enteredPin, storedPinHash ?? null);
+
+    if (isMatch) {
+      await unlockBrowser();
+      return { ok: true };
+    }
+    return { ok: false, error: "Incorrect PIN (offline mode)." };
   }
 
-  const result = await chrome.storage.local.get([
-    STORAGE_KEYS.email,
-    STORAGE_KEYS.recoveryPassword,
-  ]);
-
-  const storedEmail = result[STORAGE_KEYS.email] as string | undefined;
-  const storedPasswordHash = result[STORAGE_KEYS.recoveryPassword] as string | undefined;
-
-  if (!storedEmail || enteredEmail.trim().toLowerCase() !== storedEmail.trim().toLowerCase()) {
-    return { ok: false, error: "Incorrect email address." };
-  }
-
-  const isMatch = await verifyPassword(enteredPassword, storedPasswordHash ?? null);
-  if (!isMatch) {
-    return { ok: false, error: "Incorrect recovery password." };
-  }
-
-  // Update PIN to new PIN (hashed)
-  const hashedPin = await hashString(newPin);
-  await chrome.storage.local.set({ [STORAGE_KEYS.pin]: hashedPin });
-
-  // Unlock
-  await unlockBrowser();
-  return { ok: true };
+  // Backend was reachable and said the PIN was wrong — don't fall back locally.
+  return { ok: false, error: result.error ?? "Incorrect PIN." };
 }
 
 chrome.storage.onChanged.addListener(async (changes, areaName) => {
@@ -394,13 +366,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   if (message?.type === "UNLOCK") {
     verifyAndUnlock(message.pin)
-      .then((res) => sendResponse(res))
-      .catch((err) => sendResponse({ ok: false, error: String(err) }));
-    return true;
-  }
-
-  if (message?.type === "RESET_PIN_AND_UNLOCK") {
-    verifyResetAndUnlock(message.email, message.password, message.newPin)
       .then((res) => sendResponse(res))
       .catch((err) => sendResponse({ ok: false, error: String(err) }));
     return true;
