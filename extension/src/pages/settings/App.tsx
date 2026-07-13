@@ -1,14 +1,7 @@
 import { useState } from "react";
 import { useRequireOnboarding } from "../../shared/useRequireOnboarding";
-import {
-  setlmbSettings,
-  setlmbPin,
-  verifyPin,
-  hashString,
-  type lmbData,
-} from "../../shared/lmbStorage";
+import { setlmbSettings, type lmbData } from "../../shared/lmbStorage";
 import { AutoLockSection } from "./AutoLockSection";
-import { AccountSection } from "./AccountSection";
 
 export function App() {
   const guard = useRequireOnboarding();
@@ -16,7 +9,7 @@ export function App() {
   if (guard.status === "checking" || guard.status === "redirecting") {
     return (
       <div className="page">
-        <p className="loading-text">Loading\u2026</p>
+        <p className="loading-text">Loading…</p>
       </div>
     );
   }
@@ -32,17 +25,6 @@ function SettingsContent({ initialData }: { initialData: lmbData }) {
   ) {
     const nextSettings = await setlmbSettings(partial);
     setData((prev) => ({ ...prev, settings: nextSettings }));
-  }
-
-  async function handleResetPin(currentPin: string, newPin: string) {
-    const isMatch = await verifyPin(currentPin, data.pin);
-    if (!isMatch) {
-      return { ok: false, error: "Current PIN is incorrect." };
-    }
-    await setlmbPin(newPin);
-    const hashedNewPin = await hashString(newPin);
-    setData((prev) => ({ ...prev, pin: hashedNewPin }));
-    return { ok: true };
   }
 
   return (
@@ -61,7 +43,6 @@ function SettingsContent({ initialData }: { initialData: lmbData }) {
           settings={data.settings}
           onChange={handleSettingsChange}
         />
-        <AccountSection email={data.email} onResetPin={handleResetPin} />
       </div>
     </div>
   );

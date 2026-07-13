@@ -20,7 +20,6 @@ export function AboutStep({ onNext }: AboutStepProps) {
       <ul className="feature-list">
         <FeatureRow text="Lock all open tabs instantly with Ctrl+Shift+K" />
         <FeatureRow text="Every page checks in before it loads" />
-        <FeatureRow text="Forgot your PIN? Recover access with your email and password" />
       </ul>
 
       <button className="btn btn-primary btn-full" onClick={onNext}>
@@ -42,16 +41,3 @@ function FeatureRow({ text }: { text: string }) {
     </li>
   )
 }
-
-// function ShieldIcon() {
-//   return (
-//     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-//       <path
-//         d="M12 3 4 6v6c0 5 3.5 7.5 8 9 4.5-1.5 8-4 8-9V6l-8-3Z"
-//         strokeLinecap="round"
-//         strokeLinejoin="round"
-//       />
-//       <path d="m9 12 2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
-//     </svg>
-//   )
-// }

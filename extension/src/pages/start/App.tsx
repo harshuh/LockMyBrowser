@@ -1,46 +1,44 @@
-import { useState } from "react";
-import { AboutStep } from "./AboutStep";
-import { SetupForm } from "./SetupForm";
-import { completeOnboarding } from "../../shared/lmbStorage";
-
-type Screen = "about" | "form";
+import { useState } from 'react'
+import { SetupForm } from './SetupForm'
+import { apiRegister, apiLogin } from '../../shared/lmbApi'
+import { completeOnboarding } from '../../shared/lmbStorage'
 
 export function App() {
-  const [screen, setScreen] = useState<Screen>("about");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  async function handleComplete(data: {
-    email: string;
-    password: string;
-    pin: string;
-  }) {
-    setSubmitting(true);
-    setError(null);
+  async function handleComplete(data: { name: string; email: string; pin: string }) {
+    setSubmitting(true)
+    setError(null)
 
     try {
-      await completeOnboarding(data);
-      window.location.href = chrome.runtime.getURL("settings.html");
-    } catch (err) {
-      setError("Could not save your settings. Please try again.");
-      console.error(err);
-      setSubmitting(false);
+      const registerResult = await apiRegister(data.name, data.email, data.pin)
+      if (!registerResult.success) {
+        setError(registerResult.message)
+        return
+      }
+
+      const loginResult = await apiLogin(data.email, data.pin)
+      if (!loginResult.success) {
+        setError(loginResult.message)
+        return
+      }
+
+      await completeOnboarding({ email: data.email })
+
+      window.close()
+    } catch {
+      setError('Could not reach server. Check your connection and try again.')
+    } finally {
+      setSubmitting(false)
     }
   }
 
   return (
     <div className="page">
       <div className="card">
-        {screen === "about" && <AboutStep onNext={() => setScreen("form")} />}
-
-        {screen === "form" && (
-          <SetupForm
-            onComplete={handleComplete}
-            submitting={submitting}
-            error={error}
-          />
-        )}
+        <SetupForm onComplete={handleComplete} submitting={submitting} error={error} />
       </div>
     </div>
-  );
+  )
 }

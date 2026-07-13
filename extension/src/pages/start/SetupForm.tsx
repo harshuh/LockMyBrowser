@@ -2,7 +2,7 @@ import { useState, type InputHTMLAttributes } from 'react'
 import { PinInput } from './PinInput'
 
 interface SetupFormProps {
-  onComplete: (data: { email: string; password: string; pin: string }) => void
+  onComplete: (data: { name: string; email: string; pin: string }) => void
   submitting: boolean
   error: string | null
 }
@@ -11,9 +11,8 @@ const MIN_PIN_LENGTH = 4
 const MAX_PIN_LENGTH = 12
 
 export function SetupForm({ onComplete, submitting, error }: SetupFormProps) {
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [pin, setPin] = useState('')
   const [confirmPin, setConfirmPin] = useState('')
   const [validationError, setValidationError] = useState<string | null>(null)
@@ -22,16 +21,12 @@ export function SetupForm({ onComplete, submitting, error }: SetupFormProps) {
     e.preventDefault()
     setValidationError(null)
 
+    if (!name.trim() || name.trim().length < 2) {
+      setValidationError('Enter your name (at least 2 characters).')
+      return
+    }
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setValidationError('Enter a valid email address.')
-      return
-    }
-    if (password.length < 8) {
-      setValidationError('Password must be at least 8 characters.')
-      return
-    }
-    if (password !== confirmPassword) {
-      setValidationError('Passwords don\u2019t match.')
       return
     }
     if (pin.length < MIN_PIN_LENGTH || pin.length > MAX_PIN_LENGTH) {
@@ -43,7 +38,7 @@ export function SetupForm({ onComplete, submitting, error }: SetupFormProps) {
       return
     }
 
-    onComplete({ email: email.trim(), password, pin })
+    onComplete({ name: name.trim(), email: email.trim(), pin })
   }
 
   const displayError = validationError ?? error
@@ -53,35 +48,27 @@ export function SetupForm({ onComplete, submitting, error }: SetupFormProps) {
       <div>
         <h1 className="step-title">Set up LockMyBrowser</h1>
         <p className="step-subtitle">
-          Your PIN locks and unlocks your browser day to day. Your email and password are
-          only used to recover access if you forget your PIN.
+          Your PIN locks and unlocks your browser day to day.
         </p>
       </div>
 
       <section className="form-section">
-        <p className="form-section-label">Account recovery</p>
+        <p className="form-section-label">Your details</p>
         <div className="field-stack">
+          <Field
+            label="Name"
+            type="text"
+            placeholder="Your name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            autoFocus
+          />
           <Field
             label="Email"
             type="email"
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            autoFocus
-          />
-          <Field
-            label="Recovery password"
-            type="password"
-            placeholder="At least 8 characters"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <Field
-            label="Confirm recovery password"
-            type="password"
-            placeholder="Re-enter password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
           />
         </div>
       </section>
