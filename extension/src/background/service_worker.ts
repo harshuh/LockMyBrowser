@@ -170,6 +170,13 @@ chrome.windows.onFocusChanged.addListener(async (windowId) => {
   ]);
   if (!result[STORAGE_KEYS.locked]) return;
   if (windowId === result[STORAGE_KEYS.lockWindowId]) return;
+
+  const lockWindowId = result[STORAGE_KEYS.lockWindowId] as number | undefined;
+  if (lockWindowId) {
+    const lockWin = await chrome.windows.get(lockWindowId).catch(() => null);
+    if (lockWin?.state === "minimized") return;
+  }
+
   await enforceLockWindow();
 });
 

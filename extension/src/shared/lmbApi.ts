@@ -48,7 +48,7 @@ export async function apiUnlock(pin: string): Promise<{ ok: boolean; error?: str
   const result = await chrome.storage.local.get("lmb:accessToken");
   const accessToken = result["lmb:accessToken"];
 
-  if (accessToken) return { ok: false, error: "Not logged in." };
+  if (!accessToken) return { ok: false, error: "Not logged in." };
 
   try {
     const res = await fetch(`${API_BASE}/unlock`, {
