@@ -5,12 +5,13 @@ interface SetupFormProps {
   onComplete: (data: { name: string; email: string; pin: string }) => void
   submitting: boolean
   error: string | null
+  onSwitchToLogin: () => void
 }
 
 const MIN_PIN_LENGTH = 4
 const MAX_PIN_LENGTH = 12
 
-export function SetupForm({ onComplete, submitting, error }: SetupFormProps) {
+export function SetupForm({ onComplete, submitting, error, onSwitchToLogin }: SetupFormProps){
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [pin, setPin] = useState('')
@@ -99,6 +100,10 @@ export function SetupForm({ onComplete, submitting, error }: SetupFormProps) {
 
       <button type="submit" className="btn btn-primary btn-full" disabled={submitting}>
         {submitting ? 'Setting up\u2026' : 'Finish setup'}
+      </button>
+
+      <button type="button" className="btn-link" onClick={onSwitchToLogin} disabled={submitting}>
+        Already have an account? Log in
       </button>
     </form>
   )

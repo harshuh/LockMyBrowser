@@ -48,6 +48,22 @@ input {
   user-select: none;
 }
 
+.btn-link {
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font-size: 13px;
+  color: var(--text-secondary, #6b7280);
+  text-decoration: underline;
+  cursor: pointer;
+  align-self: center;
+}
+
+.btn-link:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .card {
   width: 100%;
   max-width: 440px;
