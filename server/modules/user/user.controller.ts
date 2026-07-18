@@ -93,6 +93,37 @@ export class UserController {
     }
   };
 
+  sendVerificationCode = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) throw new UnauthorizedError("User not authenticated");
+
+      const data = await userService.sendVerificationCode(userId);
+
+      res.status(200).json(new ApiResponse(200, data.message, data));
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  verifyEmailCode = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) throw new UnauthorizedError("User not authenticated");
+
+      const { code } = req.body;
+      const data = await userService.verifyEmailCode(userId, code);
+
+      res.status(200).json(new ApiResponse(200, data.message, data));
+    } catch (error) {
+      next(error);
+    }
+  };
+
   refresh = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const refreshToken = req.cookies?.refreshToken;

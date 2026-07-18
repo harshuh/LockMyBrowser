@@ -109,6 +109,31 @@ export class UserService {
     return { message: enabled ? "Secret PIN enabled" : "Secret PIN disabled" };
   }
 
+  async sendVerificationCode(userId: string) {
+    const user = await userRepository.findUserById(userId);
+    if (!user) throw new UnauthorizedError("User not found");
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    await userRepository.saveVerificationCode(user.email, code);
+
+    return { message: "Verification code sent" }; // abhi smtp mailer nahi hai so abhi no mail send
+  }
+
+  async verifyEmailCode(userId: string, code: string) {
+    const user = await userRepository.findUserById(userId);
+    if (!user) throw new UnauthorizedError("User not found");
+
+    const storedCode = await userRepository.getVerificationCode(user.email);
+    if (!storedCode || storedCode !== code) {
+      throw new UnauthorizedError("Invalid or expired code");
+    }
+
+    await userRepository.markEmailVerified(userId);
+    await userRepository.deleteVerificationCode(user.email);
+
+    return { message: "Email verified" };
+  }
+
   async refreshAccessToken(refreshToken: string) {
     if (!refreshToken) throw new UnauthorizedError("Refresh token missing");
 

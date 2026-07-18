@@ -75,6 +75,26 @@ export class UserRepository {
     });
   }
 
+  async markEmailVerified(userId: string) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { emailVerified: true },
+    });
+  }
+
+  async saveVerificationCode(email: string, code: string) {
+    const cacheKey = `email:verify:${email}`;
+    await redis.set(cacheKey, code, { EX: 60 * 10 }); //10 minutes
+  }
+
+  async getVerificationCode(email: string) {
+    return redis.get(`email:verify:${email}`);
+  }
+
+  async deleteVerificationCode(email: string) {
+    await redis.del(`email:verify:${email}`);
+  }
+
   async invalidateUserCache(userId: string, email: string) {
     await redis.del(`user:login:${email}`);
     await redis.del(`user:pinhash:${userId}`);
