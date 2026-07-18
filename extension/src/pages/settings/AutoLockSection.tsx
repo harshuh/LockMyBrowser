@@ -39,7 +39,7 @@ export function AutoLockSection({ settings, onChange }: AutoLockSectionProps) {
   );
 }
 
-function Toggle({
+export function Toggle({
   checked,
   onChange,
 }: {

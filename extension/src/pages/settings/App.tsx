@@ -28,6 +28,7 @@ function SettingsContent({ initialData }: { initialData: lmbData }) {
   }
 
   return (
+    
     <div className="page page-settings">
       <div className="settings-container">
         <header className="settings-header">
