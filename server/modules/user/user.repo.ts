@@ -1,4 +1,3 @@
-
 import { prisma } from "../../lib/prisma";
 import type {
   RegisterInput,
@@ -7,10 +6,7 @@ import type {
 } from "../../schemas/auth.schema";
 import redis from "../../config/redisClient";
 
-
-
 export class UserRepository {
-
   async findUserByEmail(email: string) {
     return prisma.user.findUnique({ where: { email } });
   }
@@ -58,10 +54,31 @@ export class UserRepository {
     return user.pin;
   }
 
+  async updatePin(userId: string, pinHash: string) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { pin: pinHash },
+    });
+  }
+
+  async updateSecretPin(userId: string, secretPinHash: string | null) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { secretPin: secretPinHash },
+    });
+  }
+
+  async setSecretPinEnabled(userId: string, enabled: boolean) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { secretPinEnabled: enabled },
+    });
+  }
+
   async invalidateUserCache(userId: string, email: string) {
     await redis.del(`user:login:${email}`);
     await redis.del(`user:pinhash:${userId}`);
-  } 
+  }
 }
 
 export const userRepository = new UserRepository();

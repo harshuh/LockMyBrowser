@@ -1,101 +1,144 @@
-
 import { userRepository } from "./user.repo";
 import { comparePin, hashPin } from "../../utils/hash";
 import { ApiError } from "../../utils/ApiError";
 import { ConflictError, UnauthorizedError } from "../../utils/CustomErrors";
-import type { RegisterInput, LoginInput, SecretPinInput,} from "../../schemas/auth.schema";
-import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../../utils/jwt";
-
+import type {
+  RegisterInput,
+  LoginInput,
+  SecretPinInput,
+  ResetPinInput,
+} from "../../schemas/auth.schema";
+import {
+  signAccessToken,
+  signRefreshToken,
+  verifyRefreshToken,
+} from "../../utils/jwt";
 
 export class UserService {
+  async registerUser(data: RegisterInput) {
+    const existingEmail = await userRepository.findUserByEmail(data.email);
 
-    async registerUser(data:RegisterInput){
+    if (existingEmail)
+      throw new ConflictError("User with this email already exists");
 
-        const existingEmail = await userRepository.findUserByEmail(data.email)
+    const pinHash = await hashPin(data.pin);
 
-        if(existingEmail) throw new ConflictError('User with this email already exists')
+    return userRepository.registerUser({
+      name: data.name,
+      email: data.email,
+      pin: pinHash,
+    });
+  }
 
-        const pinHash  = await hashPin(data.pin)
+  async loginUser(data: LoginInput) {
+    const existingUser = await userRepository.findUserByEmail(data.email);
 
-        return userRepository.registerUser({
-        name: data.name,
-        email: data.email,
-        pin: pinHash,
-        });
+    if (!existingUser) throw new UnauthorizedError("Invalid email or password");
+
+    const isPasswordvalid = await comparePin(data.pin, existingUser.pin);
+
+    if (!isPasswordvalid)
+      throw new UnauthorizedError("Invalid email or password");
+
+    const accessToken = signAccessToken({ id: existingUser.id });
+    const refreshToken = signRefreshToken({ id: existingUser.id });
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    await userRepository.saveRefreshToken(
+      existingUser.id,
+      refreshToken,
+      expiresAt,
+    );
+
+    return {
+      user: {
+        id: existingUser.id,
+        name: existingUser.name,
+        email: existingUser.email,
+      },
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async unlockBrowser(userId: string, pin: string) {
+    const pinHash = await userRepository.getPinHashToUnlock(userId);
+
+    if (!pinHash) throw new UnauthorizedError("User not found");
+
+    const isValid = await comparePin(pin, pinHash);
+
+    if (!isValid) throw new UnauthorizedError("Invalid PIN");
+
+    return { unlocked: true };
+  }
+
+  async resetPin(userId: string, data: ResetPinInput) {
+    const user = await userRepository.findUserById(userId);
+    if (!user) throw new UnauthorizedError("User not found");
+
+    const isValid = await comparePin(data.currentPin, user.pin);
+    if (!isValid) throw new UnauthorizedError("Current PIN is incorrect");
+
+    const newPinHash = await hashPin(data.newPin);
+    await userRepository.updatePin(userId, newPinHash);
+    await userRepository.invalidateUserCache(userId, user.email);
+
+    return { message: "PIN updated successfully" };
+  }
+
+  async setSecretPin(userId: string, pin: string) {
+    const user = await userRepository.findUserById(userId);
+    if (!user) throw new UnauthorizedError("User not found");
+
+    const secretPinHash = await hashPin(pin);
+    await userRepository.updateSecretPin(userId, secretPinHash);
+
+    return { message: "Secret PIN Created" };
+  }
+
+  async toggleSecretPin(userId: string, enabled: boolean) {
+    const user = await userRepository.findUserById(userId);
+    if (!user) throw new UnauthorizedError("User not found");
+
+    await userRepository.setSecretPinEnabled(userId, enabled);
+    if (!enabled) {
+      await userRepository.updateSecretPin(userId, null);
     }
 
-    async loginUser(data:LoginInput){
-        const existingUser = await userRepository.findUserByEmail(data.email)
+    return { message: enabled ? "Secret PIN enabled" : "Secret PIN disabled" };
+  }
 
-        if (!existingUser) throw new UnauthorizedError('Invalid email or password') 
-        
-        const isPasswordvalid = await comparePin(data.pin,existingUser.pin)
+  async refreshAccessToken(refreshToken: string) {
+    if (!refreshToken) throw new UnauthorizedError("Refresh token missing");
 
-        if(!isPasswordvalid) throw new UnauthorizedError('Invalid email or password')
-
-        const accessToken = signAccessToken({id:existingUser.id})
-        const refreshToken = signRefreshToken({id:existingUser.id})
-        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-
-        await userRepository.saveRefreshToken(existingUser.id,refreshToken,expiresAt) 
-
-        return {
-            user: {
-                id: existingUser.id,
-                name: existingUser.name,
-                email: existingUser.email,
-            },
-            accessToken,
-            refreshToken,
-        };
+    let payload;
+    try {
+      payload = verifyRefreshToken(refreshToken);
+    } catch (error) {
+      throw new UnauthorizedError("Invalid or expired refresh token");
     }
 
-    async unlockBrowser(userId: string, pin: string){
-        
-        const pinHash = await userRepository.getPinHashToUnlock(userId)
+    const storedToken = await userRepository.findRefreshToken(refreshToken);
 
-        if(!pinHash) throw new UnauthorizedError("User not found");
-
-        const isValid = await comparePin(pin, pinHash);
-
-        if (!isValid) throw new UnauthorizedError("Invalid PIN");
-
-        return { unlocked: true };
-
+    if (!storedToken || storedToken.expiresAt < new Date()) {
+      throw new UnauthorizedError(
+        "Refresh token invalid or expired — please login again",
+      );
     }
 
-    async refreshAccessToken(refreshToken: string) {
+    const accessToken = signAccessToken({ id: payload.id });
 
-        if (!refreshToken) throw new UnauthorizedError("Refresh token missing");
+    return { accessToken };
+  }
 
-        let payload
-        try {
+  async logoutUser(refreshToken: string) {
+    if (!refreshToken) throw new UnauthorizedError("Refresh token missing");
 
-            payload = verifyRefreshToken(refreshToken)
+    await userRepository.deleteRefreshToken(refreshToken);
 
-        } catch (error) {
-            throw new UnauthorizedError("Invalid or expired refresh token")
-        }
-
-        const storedToken = await userRepository.findRefreshToken(refreshToken)
-
-        if(!storedToken || storedToken.expiresAt<new Date()){
-            throw new UnauthorizedError("Refresh token invalid or expired — please login again")
-        }
-
-        const accessToken = signAccessToken({id:payload.id})
-
-        return { accessToken };
-
-    }
-
-    async logoutUser(refreshToken: string){
-        if(!refreshToken) throw new UnauthorizedError("Refresh token missing")
-
-        await userRepository.deleteRefreshToken(refreshToken)
-
-        return {message: "Logged out successfully"}
-    }
+    return { message: "Logged out successfully" };
+  }
 }
 
-export const userService = new UserService()
+export const userService = new UserService();
