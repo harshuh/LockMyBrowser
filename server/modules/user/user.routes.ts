@@ -10,6 +10,8 @@ import {
   setSecretPinSchema,
   toggleSecretPinSchema,
   verifyEmailCodeSchema,
+  forgotPinRequestSchema,
+  forgotPinConfirmSchema,
 } from "../../schemas/auth.schema";
 
 const router = Router();
@@ -57,6 +59,18 @@ router.post(
   authenticate,
   validate(verifyEmailCodeSchema),
   userController.verifyEmailCode,
+);
+
+router.post(
+  "/forgot-pin",
+  validate(forgotPinRequestSchema),
+  userController.requestPinReset,
+);
+
+router.post(
+  "/forgot-pin/confirm",
+  validate(forgotPinConfirmSchema),
+  userController.confirmPinReset,
 );
 
 router.post("/refresh", authenticate, userController.refresh);

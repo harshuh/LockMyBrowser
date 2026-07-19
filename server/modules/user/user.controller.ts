@@ -124,6 +124,26 @@ export class UserController {
     }
   };
 
+  requestPinReset = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email } = req.body;
+      const data = await userService.requestPinReset(email);
+      res.status(200).json(new ApiResponse(200, data.message, data));
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  confirmPinReset = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email, code, newPin } = req.body;
+      const data = await userService.confirmPinReset(email, code, newPin);
+      res.status(200).json(new ApiResponse(200, data.message, data));
+    } catch (error) {
+      next(error);
+    }
+  };
+
   refresh = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const refreshToken = req.cookies?.refreshToken;
