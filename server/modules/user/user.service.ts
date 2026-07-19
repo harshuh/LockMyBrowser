@@ -114,7 +114,7 @@ export class UserService {
     if (!user) throw new UnauthorizedError("User not found");
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    await userRepository.saveVerificationCode(user.email, code);
+    await userRepository.saveCode(user.email, "email-verify", code);
 
     return { message: "Verification code sent" }; // abhi smtp mailer nahi hai so abhi no mail send
   }
@@ -123,15 +123,47 @@ export class UserService {
     const user = await userRepository.findUserById(userId);
     if (!user) throw new UnauthorizedError("User not found");
 
-    const storedCode = await userRepository.getVerificationCode(user.email);
+    const storedCode = await userRepository.getCode(user.email, "email-verify");
     if (!storedCode || storedCode !== code) {
       throw new UnauthorizedError("Invalid or expired code");
     }
 
     await userRepository.markEmailVerified(userId);
-    await userRepository.deleteVerificationCode(user.email);
+    await userRepository.deleteCode(user.email, "email-verify");
 
     return { message: "Email verified" };
+  }
+
+  async requestPinReset(email: string) {
+    const user = await userRepository.findUserByEmail(email);
+    if (!user)
+      return {
+        message: "If that email is registered, a reset code has been sent.",
+      };
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    await userRepository.saveCode(user.email, "pin-reset", code);
+
+    return {
+      message: "If that email is registered, a reset code has been sent.",
+    }; // abhi smtp mailer nahi hai so abhi no mail send
+  }
+
+  async confirmPinReset(email: string, code: string, newPin: string) {
+    const user = await userRepository.findUserByEmail(email);
+    if (!user) throw new UnauthorizedError("Invalid or expired code");
+
+    const storedCode = await userRepository.getCode(user.email, "pin-reset");
+    if (!storedCode || storedCode !== code) {
+      throw new UnauthorizedError("Invalid or expired code");
+    }
+
+    const newPinHash = await hashPin(newPin);
+    await userRepository.updatePin(user.id, newPinHash);
+    await userRepository.invalidateUserCache(user.id, user.email);
+    await userRepository.deleteCode(user.email, "pin-reset");
+
+    return { message: "PIN reset successfully. You can now log in." };
   }
 
   async refreshAccessToken(refreshToken: string) {

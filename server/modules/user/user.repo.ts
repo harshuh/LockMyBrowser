@@ -82,17 +82,21 @@ export class UserRepository {
     });
   }
 
-  async saveVerificationCode(email: string, code: string) {
-    const cacheKey = `email:verify:${email}`;
-    await redis.set(cacheKey, code, { EX: 60 * 10 }); //10 minutes
+  async saveCode(
+    email: string,
+    purpose: string,
+    code: string,
+    ttlSeconds = 60 * 10,
+  ) {
+    await redis.set(`code:${purpose}:${email}`, code, { EX: ttlSeconds });
   }
 
-  async getVerificationCode(email: string) {
-    return redis.get(`email:verify:${email}`);
+  async getCode(email: string, purpose: string) {
+    return redis.get(`code:${purpose}:${email}`);
   }
 
-  async deleteVerificationCode(email: string) {
-    await redis.del(`email:verify:${email}`);
+  async deleteCode(email: string, purpose: string) {
+    await redis.del(`code:${purpose}:${email}`);
   }
 
   async invalidateUserCache(userId: string, email: string) {
