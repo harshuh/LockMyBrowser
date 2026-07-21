@@ -1,22 +1,31 @@
 import bcrypt from "bcryptjs";
 
 export interface lmbSettings {
-  autoLockEnabled: boolean;
-  autoLockMinutes: number;
-  lockedUrl: string;
+  autoLockEnabled: boolean
+  autoLockMinutes: number
+  enabled: boolean
+  secretPinEnabled: boolean
+  alertOnFailedAttempts: boolean
+  failedAttemptThreshold: number
 }
+
 
 export interface lmbData {
   onboarded: boolean;
   email: string | null;
   pin: string | null;
   settings: lmbSettings;
+  emailVerified: boolean
 }
+
 
 export const DEFAULT_SETTINGS: lmbSettings = {
   autoLockEnabled: true,
   autoLockMinutes: 5,
-  lockedUrl: "",
+  enabled: true,
+  secretPinEnabled: false,
+  alertOnFailedAttempts: true,
+  failedAttemptThreshold: 5,
 };
 
 const KEYS = {
@@ -24,6 +33,7 @@ const KEYS = {
   email: "lmb:email",
   pin: "lmb:pin",
   settings: "lmb:settings",
+  emailVerified: "lmb:emailVerified",
   accessToken: "lmb:accessToken",
 } as const;
 
@@ -33,6 +43,7 @@ export async function getlmbData(): Promise<lmbData> {
     KEYS.email,
     KEYS.pin,
     KEYS.settings,
+    KEYS.emailVerified,
   ]);
 
   return {
@@ -43,6 +54,7 @@ export async function getlmbData(): Promise<lmbData> {
       ...DEFAULT_SETTINGS,
       ...(result[KEYS.settings] as Partial<lmbSettings> | undefined),
     },
+    emailVerified: Boolean(result[KEYS.emailVerified]),
   };
 }
 
@@ -61,6 +73,8 @@ export async function verifyPin(enteredPin: string, storedPinHash: string | null
   if (!storedPinHash) return false;
   return bcrypt.compare(enteredPin, storedPinHash);
 }
+
+
 
 export async function completeOnboarding(data: { email: string }): Promise<void> {
   await chrome.storage.local.set({

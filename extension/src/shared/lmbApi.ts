@@ -69,3 +69,35 @@ export async function apiUnlock(pin: string): Promise<{ ok: boolean; error?: str
     return { ok: false, error: "NETWORK_ERROR" };
   }
 }
+
+export async function apiResetPin(email: string | null, currentPin: string, newPin: string) {
+  // POST to your backend reset-pin endpoint
+  // return { ok: boolean, error?: string }
+}
+
+export async function apiSetSecretPin(email: string | null, pin: string) {
+  // POST to your backend set-secret-pin endpoint
+}
+
+export async function apiSendVerificationCode(
+  email: string
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch('/api/send-verification-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      return { ok: false, error: data.message ?? 'Could not send verification email.' }
+    }
+    return { ok: true }
+  } catch {
+    return { ok: false, error: 'Could not reach server.' }
+  }
+}
+
+export async function apiVerifyEmailCode(email: string, code: string) {
+  // POST the code, backend confirms match
+}
